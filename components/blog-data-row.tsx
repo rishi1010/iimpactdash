@@ -42,11 +42,13 @@ export function BlogDataRow({
       </span>
 
       <div className="flex flex-col gap-0.5 flex-1 min-w-0">
-        <span className="text-sm font-semibold truncate">{title}</span>
-        <span className="text-xs text-muted-foreground truncate">{blurb}</span>
+        <span className="text-sm font-semibold truncate max-w-sm">{title}</span>
+        <span className="text-xs text-muted-foreground truncate max-w-xs">
+          {blurb}
+        </span>
       </div>
 
-      <span className="text-xs text-muted-foreground w-40 truncate hidden md:block">
+      <span className="text-xs text-muted-foreground w-40 truncate hidden  md:block">
         {slug}
       </span>
 
@@ -59,13 +61,6 @@ export function BlogDataRow({
       </span>
 
       <div className="flex gap-2 shrink-0">
-        <Button
-          variant="outline"
-          size="icon"
-          onClick={() => router.push(`/blogs/${slug}/edit`)}
-        >
-          <Pencil className="h-4 w-4" />
-        </Button>
         <Button variant="destructive" size="icon" onClick={handleDelete}>
           <Trash2 className="h-4 w-4" />
         </Button>

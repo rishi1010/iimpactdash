@@ -119,7 +119,9 @@ function QuestionForm({
 
       {/* question text */}
       <div className="flex flex-col gap-1.5">
-        <Label className="font-mono text-xs">Question</Label>
+        <Label className="font-mono text-xs">
+          Question (Use Latex if Qa. Convert using Claude)
+        </Label>
         <Textarea
           className="font-mono text-sm min-h-20 resize-y"
           placeholder="Enter question text..."
@@ -168,7 +170,9 @@ function QuestionForm({
 
       {/* explanation */}
       <div className="flex flex-col gap-1.5">
-        <Label className="font-mono text-xs">Explanation</Label>
+        <Label className="font-mono text-xs">
+          Explanation (Use Latex if Qa. Convert using Claude)
+        </Label>
         <Textarea
           className="font-mono text-sm min-h-16 resize-y"
           placeholder="Explain the correct answer..."

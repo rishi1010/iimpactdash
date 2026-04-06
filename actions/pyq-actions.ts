@@ -162,3 +162,149 @@ export async function uploadContextImage(
 
   return { url: data.publicUrl };
 }
+
+export type FullPaper = {
+  id: string;
+  section: Section;
+  year: number;
+  slot: number;
+  sets: {
+    id: string;
+    label: string;
+    context: string;
+    context_images: string[];
+    order_index: number;
+    questions: {
+      id: string;
+      text: string;
+      options: string[];
+      answer: number | null;
+      explanation: string;
+      is_tita: boolean;
+      tita_answer: string;
+      order_index: number;
+      set_id: string | null;
+    }[];
+  }[];
+  standalones: {
+    id: string;
+    text: string;
+    options: string[];
+    answer: number | null;
+    explanation: string;
+    is_tita: boolean;
+    tita_answer: string;
+    order_index: number;
+    set_id: string | null;
+  }[];
+};
+
+export async function getPaperById(id: string): Promise<FullPaper | null> {
+  const { data: paper, error: paperError } = await supabase
+    .from("pyq_papers")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (paperError || !paper) return null;
+
+  const { data: sets } = await supabase
+    .from("question_sets")
+    .select("*")
+    .eq("paper_id", id)
+    .order("order_index", { ascending: true });
+
+  const { data: questions } = await supabase
+    .from("questions")
+    .select("*")
+    .eq("paper_id", id)
+    .order("order_index", { ascending: true });
+
+  const setsWithQuestions = (sets ?? []).map((set) => ({
+    ...set,
+    questions: (questions ?? []).filter((q) => q.set_id === set.id),
+  }));
+
+  const standalones = (questions ?? []).filter((q) => q.set_id === null);
+
+  return { ...paper, sets: setsWithQuestions, standalones };
+}
+
+export async function updatePaper(
+  id: string,
+  input: SavePaperInput,
+): Promise<{ error?: string }> {
+  // delete existing questions and sets
+  const { error: qError } = await supabase
+    .from("questions")
+    .delete()
+    .eq("paper_id", id);
+  if (qError) return { error: qError.message };
+
+  const { error: sError } = await supabase
+    .from("question_sets")
+    .delete()
+    .eq("paper_id", id);
+  if (sError) return { error: sError.message };
+
+  // update paper metadata
+  const { error: pError } = await supabase
+    .from("pyq_papers")
+    .update({ section: input.section, year: input.year, slot: input.slot })
+    .eq("id", id);
+  if (pError) return { error: pError.message };
+
+  // re-insert groups
+  for (let i = 0; i < input.groups.length; i++) {
+    const group = input.groups[i];
+
+    if (group.type === "set") {
+      const { data: set, error: setError } = await supabase
+        .from("question_sets")
+        .insert({
+          paper_id: id,
+          label: group.label,
+          context: group.context,
+          context_images: group.context_image_urls,
+          order_index: i,
+        })
+        .select()
+        .single();
+
+      if (setError) return { error: setError.message };
+
+      if (group.questions.length > 0) {
+        const { error: qiError } = await supabase.from("questions").insert(
+          group.questions.map((q, qi) => ({
+            paper_id: id,
+            set_id: set.id,
+            text: q.text,
+            options: q.options,
+            answer: q.answer,
+            explanation: q.explanation,
+            is_tita: q.is_tita,
+            tita_answer: q.tita_answer,
+            order_index: qi,
+          })),
+        );
+        if (qiError) return { error: qiError.message };
+      }
+    } else {
+      const q = group.question;
+      const { error: qiError } = await supabase.from("questions").insert({
+        paper_id: id,
+        set_id: null,
+        text: q.text,
+        options: q.options,
+        answer: q.answer,
+        explanation: q.explanation,
+        is_tita: q.is_tita,
+        tita_answer: q.tita_answer,
+        order_index: i,
+      });
+      if (qiError) return { error: qiError.message };
+    }
+  }
+
+  return {};
+}

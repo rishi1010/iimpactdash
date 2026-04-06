@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -72,6 +72,13 @@ export function BlogDataRow({
       </span>
 
       <div className="flex gap-2 shrink-0">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => router.push(`/blogs/${slug}/edit`)}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <Button variant="destructive" size="icon">

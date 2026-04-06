@@ -90,3 +90,52 @@ export async function handleImageUpload(file: File): Promise<string> {
 
   return data.publicUrl;
 }
+
+export async function getBlogById(id: string): Promise<Blog | null> {
+  const { data, error } = await supabase
+    .from("blogs")
+    .select("*")
+    .eq("slug", id)
+    .single();
+
+  if (error) return null;
+  return data;
+}
+
+export async function updateBlog(
+  id: string,
+  data: {
+    title: string;
+    blurb: string;
+    content: string;
+    slug: string;
+    cover_image_url: string;
+  },
+): Promise<{ error?: string }> {
+  const { error } = await supabase
+    .from("blogs")
+    .update({ ...data, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) return { error: error.message };
+  return {};
+}
+
+export async function uploadBlogImage(
+  formData: FormData,
+): Promise<{ url?: string; error?: string }> {
+  const file = formData.get("file") as File;
+  const filename = `${Date.now()}-${file.name}`;
+
+  const { error } = await supabase.storage
+    .from("content-images")
+    .upload(filename, file);
+
+  if (error) return { error: error.message };
+
+  const { data } = supabase.storage
+    .from("content-images")
+    .getPublicUrl(filename);
+
+  return { url: data.publicUrl };
+}

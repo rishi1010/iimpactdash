@@ -201,7 +201,9 @@ function QuestionForm({
       )}
 
       <div className="flex flex-col gap-1.5">
-        <Label className="font-mono text-xs">Explanation</Label>
+        <Label className="font-mono text-xs">
+          Explanation (Use Markdown if DILR)
+        </Label>
         <Textarea
           className="font-mono text-sm min-h-16 resize-y"
           placeholder="Explain the correct answer..."
